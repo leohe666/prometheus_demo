@@ -92,6 +92,8 @@ func main() {
 		"http_req",
 		"统计当前活跃的请求数").Build())
 
+	// query:my_namespace_my_subsystem_test 统计接口响应时间
+	// query:my_namespace_my_subsystem_http_req_active_req 统计当前活跃的请求数量
 	server.GET("/test", func(ctx *gin.Context) {
 		num := rand.IntN(3)
 		time.Sleep(time.Duration(num) * time.Second)
@@ -99,6 +101,7 @@ func main() {
 		ctx.String(http.StatusOK, "OK")
 	})
 
+	// query:my_namespace_my_subsystem_gorm_test 统计 GORM 执行时间
 	server.GET("/gorm", func(ctx *gin.Context) {
 		// 执行数据库操作
 		var users []User
@@ -117,6 +120,7 @@ func main() {
 		})
 	})
 
+	// query:my_namespace_my_subsystem_redis_test 统计 Redis 执行时间
 	server.GET("/redis", func(ctx *gin.Context) {
 		// 执行redis操作
 		err := client.Set(ctx, "test_key", []byte("aaaaaa"), 5*time.Second).Err()

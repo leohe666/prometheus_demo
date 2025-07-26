@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	// targetURL   = "http://localhost:8080/test" // 目标 URL
+	targetURL = "http://localhost:8080/test" // 目标 URL
 	// targetURL   = "http://localhost:8080/gorm"  // 目标 URL
-	targetURL   = "http://localhost:8080/redis" // 目标 URL
-	numRequests = 1000                          // 总请求次数
-	concurrency = 60                            // 最大并发协程数量
+	// targetURL   = "http://localhost:8080/redis" // 目标 URL
+	numRequests = 1000 // 总请求次数
+	concurrency = 60   // 最大并发协程数量
 )
 
 func main() {
