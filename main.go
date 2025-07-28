@@ -1,12 +1,19 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand/v2"
 	"net/http"
+	"prometheus_demo/webhook/handler"
+	"prometheus_demo/webhook/model"
+	"prometheus_demo/webhook/util"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 
@@ -18,6 +25,7 @@ import (
 func initPrometheus() {
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
+		// 这里配置prometheus的配置
 		http.ListenAndServe(":8081", nil)
 	}()
 }
@@ -134,6 +142,51 @@ func main() {
 		ctx.JSON(http.StatusOK, gin.H{
 			"code": 200,
 			"msg":  "OK",
+		})
+	})
+	server.GET("/ping", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+
+	server.POST("/webhook", func(c *gin.Context) {
+		// 注意这里的结构中的参数是通过prometheus中rules中定义的,见:https://github.com/leohe666/gonivinck_copy/blob/gonivinck_copy_self/prometheus/rules/cpu.rules中的 remark字段
+		var req model.Notification
+		if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 400, "msg": "参数错误"})
+			return
+		}
+		rawJSON, err := c.GetRawData() // 只能在绑定方法（如 ShouldBindJSON）之前调用一次
+
+		fmt.Println("rrr", rawJSON)
+		larkRequest, _ := util.TransformToLarkRequest(req)
+		bytesData, _ := json.Marshal(larkRequest)
+		reqr, _ := http.NewRequest("POST", handler.LARK_URL, bytes.NewReader(bytesData))
+		reqr.Header.Add("content-type", "application/json")
+		res, err := http.DefaultClient.Do(reqr)
+		// 飞书服务器可能通信失败
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+		defer res.Body.Close()
+		body, _ := io.ReadAll(res.Body)
+		var larkResponse model.LarkResponse
+		err = json.Unmarshal([]byte(body), &larkResponse)
+		// 飞书服务器返回的包可能有问题
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "successful receive alert notification message!",
 		})
 	})
 

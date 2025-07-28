@@ -13,8 +13,9 @@ const (
 	targetURL = "http://localhost:8080/test" // 目标 URL
 	// targetURL   = "http://localhost:8080/gorm"  // 目标 URL
 	// targetURL   = "http://localhost:8080/redis" // 目标 URL
-	numRequests = 1000 // 总请求次数
-	concurrency = 60   // 最大并发协程数量
+	numRequests = 100000 // 总请求次数
+	concurrency = 60     // 最大并发协程数量
+	// https://open.feishu.cn/open-apis/bot/v2/hook/eb2cde9c-31a9-447e-ba70-f72156622945
 )
 
 func main() {
