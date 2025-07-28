@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"math/rand/v2"
 	"net/http"
 	"prometheus_demo/webhook/handler"
@@ -151,15 +153,22 @@ func main() {
 	})
 
 	server.POST("/webhook", func(c *gin.Context) {
+		// 1. 在任何绑定操作之前，首先读取原始请求体
+		bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			log.Printf("Error reading raw body: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+			return
+		}
+
+		// 打印原始请求体
+		log.Printf("Raw Request Body: %s", string(bodyBytes))
 		// 注意这里的结构中的参数是通过prometheus中rules中定义的,见:https://github.com/leohe666/gonivinck_copy/blob/gonivinck_copy_self/prometheus/rules/cpu.rules中的 remark字段
 		var req model.Notification
 		if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
 			c.JSON(http.StatusOK, gin.H{"code": 400, "msg": "参数错误"})
 			return
 		}
-		rawJSON, err := c.GetRawData() // 只能在绑定方法（如 ShouldBindJSON）之前调用一次
-
-		fmt.Println("rrr", rawJSON)
 		larkRequest, _ := util.TransformToLarkRequest(req)
 		bytesData, _ := json.Marshal(larkRequest)
 		reqr, _ := http.NewRequest("POST", handler.LARK_URL, bytes.NewReader(bytesData))
