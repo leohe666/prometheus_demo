@@ -163,6 +163,7 @@ func main() {
 
 		// 打印原始请求体
 		log.Printf("Raw Request Body: %s", string(bodyBytes))
+		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 		// 注意这里的结构中的参数是通过prometheus中rules中定义的,见:https://github.com/leohe666/gonivinck_copy/blob/gonivinck_copy_self/prometheus/rules/cpu.rules中的 remark字段
 		var req model.Notification
 		if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
